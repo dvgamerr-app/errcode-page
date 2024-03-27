@@ -1,0 +1,43 @@
+:8080 {
+  root * /var/www/html
+
+  @contentType {
+    header Content-Type application/json
+  }
+  @accept {
+    header Accept application/json
+  }
+
+  @notFound `{err.status_code} == 403`
+
+  log {
+    output file /var/log/caddy/pager-errcode.access.log
+  }
+
+  handle * {
+    respond @contentType {"errorCode":403} 403
+    respond @accept {"errorCode":403} 403
+
+    try_files {path} /index.html
+    file_server {
+      precompressed zstd br gzip
+      status 403
+    }
+  }
+
+  handle /robots.txt {
+    skip_log
+    file_server /robots.txt 
+  }
+  handle /favicon.ico {
+    skip_log
+    file_server /favicon.ico 
+  }
+}
+
+:9000 {
+  handle /health {
+    skip_log
+    respond ☕ 200
+  }
+}
