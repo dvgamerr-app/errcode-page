@@ -2,11 +2,68 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
+		<base href="/" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script>
+			(() => {
+				let theme;
+				try {
+					theme = localStorage.getItem('errcode-page-theme');
+				} catch {
+					theme = null;
+				}
+
+				if (theme !== 'light' && theme !== 'dark') {
+					theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+				}
+
+				document.documentElement.dataset.theme = theme;
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
+		<script>
+			const configuredErrorCode = '[[placeholder `http.vars.error_code`]]';
+			if (/^\d{3}$/.test(configuredErrorCode)) {
+				const errorCodeElement = document.querySelector('[data-error-code]');
+				if (errorCodeElement) {
+					errorCodeElement.textContent = configuredErrorCode;
+					errorCodeElement.dataset.code = configuredErrorCode;
+					errorCodeElement.setAttribute('aria-label', `Error code ${configuredErrorCode}`);
+				}
+			}
+
+			const yearElement = document.querySelector('[data-current-year]');
+			if (yearElement) yearElement.textContent = String(new Date().getFullYear());
+
+			const themeToggle = document.querySelector('[data-theme-toggle]');
+			const rootElement = document.documentElement;
+
+			function updateThemeToggle() {
+				if (!themeToggle) return;
+				const darkModeEnabled = rootElement.dataset.theme === 'dark';
+				const label = darkModeEnabled ? 'Switch to light mode' : 'Switch to dark mode';
+				themeToggle.setAttribute('aria-label', label);
+				themeToggle.setAttribute('title', label);
+				themeToggle.setAttribute('aria-pressed', String(darkModeEnabled));
+			}
+
+			if (themeToggle) {
+				updateThemeToggle();
+				themeToggle.addEventListener('click', () => {
+					const nextTheme = rootElement.dataset.theme === 'dark' ? 'light' : 'dark';
+					rootElement.dataset.theme = nextTheme;
+					try {
+						localStorage.setItem('errcode-page-theme', nextTheme);
+					} catch {
+						// The selected theme still applies for the current page.
+					}
+					updateThemeToggle();
+				});
+			}
+		</script>
 	</body>
 </html>
