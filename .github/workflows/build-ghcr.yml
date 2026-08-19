@@ -73,9 +73,9 @@ jobs:
           - error_code: 403
             port: 9403
             display_name: Maintenance
-          - error_code: 502
-            port: 9502
-            display_name: 502 Bad Gateway
+          - error_code: 503
+            port: 9503
+            display_name: 502 Bad Gateway (HTTP 503)
 
     env:
       IMAGE_OWNER: ${{ github.repository_owner }}
@@ -83,7 +83,7 @@ jobs:
 
     steps:
       - name: Create GitHub Release 🎉
-        if: startsWith(github.ref, 'refs/tags/') && matrix.error_code == 502
+        if: startsWith(github.ref, 'refs/tags/') && matrix.error_code == 503
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
@@ -127,7 +127,7 @@ jobs:
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
-            printf -v message 'Maintenance (HTTP 403, port 9403) and 502 Bad Gateway (port 9502) successfully rolled out image `%s:%s`.' "$DOCKER_IMAGE" "$VERSION"
+            printf -v message 'Maintenance (HTTP 403, port 9403) and 502 Bad Gateway (HTTP 503, port 9503) successfully rolled out image `%s:%s`.' "$DOCKER_IMAGE" "$VERSION"
           else
             printf -v message 'Rollout failed (build: %s, deploy: %s).\nCheck: <%s>' "$BUILD_RESULT" "$DEPLOY_RESULT" "$RUN_URL"
           fi

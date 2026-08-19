@@ -48,6 +48,16 @@
 						description:
 							'The upstream service is temporarily unavailable. Please try again shortly.',
 						heading: '502 Bad Gateway'
+					},
+					503: {
+						label: '502',
+						variant: 'error',
+						ariaLabel: 'Error code 502',
+						documentTitle: '502 Bad Gateway · dvgamerr.app',
+						metaTitle: '502 Bad Gateway',
+						description:
+							'The upstream service is temporarily unavailable. Please try again shortly.',
+						heading: '502 Bad Gateway'
 					}
 				};
 				const statusPage = statusPages[configuredErrorCode] ?? {

@@ -100,15 +100,11 @@
 		transition:
 			color 0.2s ease,
 			background-color 0.2s ease,
-			border-color 0.2s ease,
-			box-shadow 0.2s ease;
+			border-color 0.2s ease;
 	}
 
 	.theme-toggle:hover {
 		border-color: var(--text-color);
-		box-shadow:
-			-2px 0 0 rgba(255, 0, 0, 0.75),
-			2px 0 0 rgba(0, 70, 255, 0.75);
 	}
 
 	.theme-toggle:focus-visible {
