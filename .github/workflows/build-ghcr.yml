@@ -100,20 +100,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull new image
-        run: |
-          if [ "${{ matrix.error_code }}" = "502" ]; then
-            container stop error-page-503 || true
-            container delete error-page-503 || true
-          fi
-
-          container stop ${{ env.CONTAINER_NAME }} || true
-          container delete ${{ env.CONTAINER_NAME }} || true
-          container image delete ${{ needs.build.outputs.docker_image }}:${{ needs.build.outputs.version }} || true
-          container image pull ${{ needs.build.outputs.docker_image }}:${{ needs.build.outputs.version }}
-
       - name: Start new container
         run: |
+          container rm ${{ env.CONTAINER_NAME }} || true
           container run -d \
             --name ${{ env.CONTAINER_NAME }} \
             --cpus 1 --memory 256M \
