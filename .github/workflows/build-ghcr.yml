@@ -106,10 +106,9 @@ jobs:
 
       - name: Start new container
         run: |
-          container rm -f ${{ env.CONTAINER_NAME }} 2>/dev/null || true
           container run -d \
             --name ${{ env.CONTAINER_NAME }} \
-            --cpus 1 --memory 128M \
+            --cpus 1 --memory 256M \
             -e ERROR_CODE=${{ matrix.error_code }} \
             -p ${{ matrix.port }}:8080 \
             ${{ needs.build.outputs.docker_image }}:${{ needs.build.outputs.version }}
