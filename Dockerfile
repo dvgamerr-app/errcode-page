@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM oven/bun:1 AS build
+FROM oven/bun:1 AS build
 
 WORKDIR /app
 
