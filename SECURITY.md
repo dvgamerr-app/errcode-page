@@ -7,8 +7,8 @@ currently being supported with security updates.
 
 | Depends | Version | Supported          |
 | ------- | ------- | ------------------ |
-| node  | 20.x.x   | :white_check_mark: |
-| pnpm  | 8.x.x   | :white_check_mark: |
+| node    | 20.x.x  | :white_check_mark: |
+| pnpm    | 8.x.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
