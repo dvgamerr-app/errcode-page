@@ -28,12 +28,57 @@
 		<script>
 			const configuredErrorCode = '[[placeholder `http.vars.error_code`]]';
 			if (/^\d{3}$/.test(configuredErrorCode)) {
+				const statusPages = {
+					403: {
+						label: 'Maintenance',
+						variant: 'maintenance',
+						ariaLabel: 'Service under maintenance',
+						documentTitle: 'Maintenance · dvgamerr.app',
+						metaTitle: 'Service under maintenance',
+						description:
+							'This service is temporarily unavailable while an update is being deployed.',
+						heading: 'Maintenance in Progress.'
+					},
+					502: {
+						label: '502',
+						variant: 'error',
+						ariaLabel: 'Error code 502',
+						documentTitle: '502 Bad Gateway · dvgamerr.app',
+						metaTitle: '502 Bad Gateway',
+						description:
+							'The upstream service is temporarily unavailable. Please try again shortly.',
+						heading: '502 Bad Gateway'
+					}
+				};
+				const statusPage = statusPages[configuredErrorCode] ?? {
+					label: configuredErrorCode,
+					variant: 'error',
+					ariaLabel: `Error code ${configuredErrorCode}`,
+					documentTitle: `${configuredErrorCode} · dvgamerr.app`,
+					metaTitle: `HTTP ${configuredErrorCode}`,
+					description: 'The requested service is temporarily unavailable.',
+					heading: `HTTP ${configuredErrorCode}`
+				};
+
 				const errorCodeElement = document.querySelector('[data-error-code]');
 				if (errorCodeElement) {
-					errorCodeElement.textContent = configuredErrorCode;
-					errorCodeElement.dataset.code = configuredErrorCode;
-					errorCodeElement.setAttribute('aria-label', `Error code ${configuredErrorCode}`);
+					errorCodeElement.textContent = statusPage.label;
+					errorCodeElement.dataset.code = statusPage.label;
+					errorCodeElement.dataset.variant = statusPage.variant;
+					errorCodeElement.setAttribute('aria-label', statusPage.ariaLabel);
 				}
+
+				document.title = statusPage.documentTitle;
+				document.querySelector('meta[name="title"]')?.setAttribute('content', statusPage.metaTitle);
+				document
+					.querySelector('meta[name="description"]')
+					?.setAttribute('content', statusPage.description);
+
+				const statusTitleElement = document.querySelector('[data-status-title]');
+				if (statusTitleElement) statusTitleElement.textContent = statusPage.heading;
+
+				const statusDescriptionElement = document.querySelector('[data-status-description]');
+				if (statusDescriptionElement) statusDescriptionElement.textContent = statusPage.description;
 			}
 
 			const yearElement = document.querySelector('[data-current-year]');

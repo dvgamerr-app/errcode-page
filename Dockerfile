@@ -10,7 +10,7 @@ RUN bun run build
 
 FROM caddy:latest
 
-ENV ERROR_CODE=503
+ENV ERROR_CODE=502
 
 WORKDIR /var/www/html
 

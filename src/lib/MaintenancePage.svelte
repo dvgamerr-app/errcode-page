@@ -1,9 +1,9 @@
 <svelte:head>
-	<title>Maintenance · dvgamerr.app</title>
-	<meta name="title" content="Service under maintenance" />
+	<title>502 Bad Gateway · dvgamerr.app</title>
+	<meta name="title" content="502 Bad Gateway" />
 	<meta
 		name="description"
-		content="This service is temporarily unavailable while an update is being deployed."
+		content="The upstream service is temporarily unavailable. Please try again shortly."
 	/>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
@@ -27,15 +27,20 @@
 		</span>
 	</button>
 
-	<section class="box" aria-labelledby="maintenance-title">
+	<section class="box" aria-labelledby="status-title">
 		<h1 class="code">
-			<span class="glitch" data-error-code data-code="503" aria-label="Error code 503">503</span>
+			<span
+				class="glitch"
+				data-error-code
+				data-code="502"
+				data-variant="error"
+				aria-label="Error code 502">502</span
+			>
 		</h1>
 		<div class="message">
-			<h2 id="maintenance-title">Maintenance in Progress.</h2>
-			<p>
-				We&rsquo;re rolling out an update. The service is temporarily unavailable<br />
-				and will be back shortly.
+			<h2 id="status-title" data-status-title>502 Bad Gateway</h2>
+			<p data-status-description>
+				The upstream service is temporarily unavailable. Please try again shortly.
 			</p>
 		</div>
 	</section>
@@ -173,6 +178,13 @@
 		z-index: 0;
 		padding: 0.2em;
 		line-height: 1rem;
+	}
+
+	:global([data-error-code][data-variant='maintenance']) {
+		font-size: 0.5em;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
 	}
 
 	.glitch::before,

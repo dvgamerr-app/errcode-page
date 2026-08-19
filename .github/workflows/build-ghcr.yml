@@ -2,11 +2,11 @@ name: build-containers
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
     tags:
-      - "v*"
+      - 'v*'
   pull_request:
-    branches: ["main"]
+    branches: ['main']
 
 jobs:
   build:
@@ -59,6 +59,7 @@ jobs:
         run: docker buildx build --output "type=image,push=${{ !contains(github.event_name, 'pull_request') }}" ${{ steps.prepare.outputs.buildx_args }}
 
   deploy:
+    name: deploy (${{ matrix.display_name }})
     runs-on: self-hosted
     needs: [build]
     if: github.event_name != 'pull_request'
@@ -71,8 +72,10 @@ jobs:
         include:
           - error_code: 403
             port: 9403
-          - error_code: 503
-            port: 9503
+            display_name: Maintenance
+          - error_code: 502
+            port: 9502
+            display_name: 502 Bad Gateway
 
     env:
       IMAGE_OWNER: ${{ github.repository_owner }}
@@ -80,7 +83,7 @@ jobs:
 
     steps:
       - name: Create GitHub Release 🎉
-        if: startsWith(github.ref, 'refs/tags/') && matrix.error_code == 503
+        if: startsWith(github.ref, 'refs/tags/') && matrix.error_code == 502
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
@@ -99,6 +102,11 @@ jobs:
 
       - name: Pull new image
         run: |
+          if [ "${{ matrix.error_code }}" = "502" ]; then
+            container stop error-page-503 || true
+            container delete error-page-503 || true
+          fi
+
           container stop ${{ env.CONTAINER_NAME }} || true
           container delete ${{ env.CONTAINER_NAME }} || true
           container image delete ${{ needs.build.outputs.docker_image }}:${{ needs.build.outputs.version }} || true
@@ -113,17 +121,30 @@ jobs:
             -p ${{ matrix.port }}:8080 \
             ${{ needs.build.outputs.docker_image }}:${{ needs.build.outputs.version }}
 
-      - name: Alert
-        if: success()
-        run: |
-          curl -s -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"content\":\"\`${{ env.CONTAINER_NAME }}\` successfully rolled out image \`${{ needs.build.outputs.docker_image }}:${{ needs.build.outputs.version }}\`\"}"
+  notify:
+    name: Discord deployment alert
+    runs-on: ubuntu-24.04
+    needs: [build, deploy]
+    if: always() && github.event_name != 'pull_request'
 
-      - name: Fail Alert
-        continue-on-error: true
-        if: failure()
+    steps:
+      - name: Send one rollout alert
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          DOCKER_IMAGE: ${{ needs.build.outputs.docker_image }}
+          VERSION: ${{ needs.build.outputs.version }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          curl -s -X POST "${{ secrets.DISCORD_WEBHOOK }}" \
+          if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
+            printf -v message 'Maintenance (HTTP 403, port 9403) and 502 Bad Gateway (port 9502) successfully rolled out image `%s:%s`.' "$DOCKER_IMAGE" "$VERSION"
+          else
+            printf -v message 'Rollout failed (build: %s, deploy: %s).\nCheck: <%s>' "$BUILD_RESULT" "$DEPLOY_RESULT" "$RUN_URL"
+          fi
+
+          payload=$(jq -n --arg content "$message" '{content: $content}')
+          curl --fail-with-body --silent --show-error \
+            -X POST "$DISCORD_WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "{\"content\":\"Rollout \`${{ env.CONTAINER_NAME }}\` failed.\nCheck: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>\"}"
+            -d "$payload"

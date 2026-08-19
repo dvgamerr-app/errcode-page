@@ -1,6 +1,6 @@
 :8080 {
   root * /var/www/html
-  vars error_code {$ERROR_CODE:503}
+  vars error_code {$ERROR_CODE:502}
 
   @contentType {
     header Content-Type application/json*
@@ -35,12 +35,12 @@
       between [[ ]]
     }
 
-    respond @contentType {"errorCode":{$ERROR_CODE:503}} {$ERROR_CODE:503}
-    respond @accept {"errorCode":{$ERROR_CODE:503}} {$ERROR_CODE:503}
+    respond @contentType {"errorCode":{$ERROR_CODE:502}} {$ERROR_CODE:502}
+    respond @accept {"errorCode":{$ERROR_CODE:502}} {$ERROR_CODE:502}
 
     try_files {path} /index.html
     file_server {
-      status {$ERROR_CODE:503}
+      status {$ERROR_CODE:502}
     }
   }
 }
