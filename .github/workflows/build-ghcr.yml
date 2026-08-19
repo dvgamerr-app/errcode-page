@@ -102,7 +102,7 @@ jobs:
 
       - name: Start new container
         run: |
-          container rm ${{ env.CONTAINER_NAME }} || true
+          container rm -f ${{ env.CONTAINER_NAME }} || true
           container run -d \
             --name ${{ env.CONTAINER_NAME }} \
             --cpus 1 --memory 256M \
