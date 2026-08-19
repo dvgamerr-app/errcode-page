@@ -1,0 +1,3 @@
+# Deny all AI/LLM crawling and training access
+User-Agent: *
+Disallow: /
