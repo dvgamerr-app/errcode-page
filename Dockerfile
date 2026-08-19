@@ -1,9 +1,9 @@
-FROM oven/bun:1 AS build
+FROM --platform=$BUILDPLATFORM oven/bun:1.3.14 AS build
 
 WORKDIR /app
 
-COPY package.json ./
-RUN bun install
+COPY package.json bun.lock .npmrc ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 RUN bun run build
