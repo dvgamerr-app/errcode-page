@@ -38,7 +38,7 @@
 			>
 		</h1>
 		<div class="message">
-			<h2 id="status-title" data-status-title>502 Bad Gateway</h2>
+			<h2 id="status-title" data-status-title>Bad Gateway</h2>
 			<p data-status-description>
 				The upstream service is temporarily unavailable. Please try again shortly.
 			</p>

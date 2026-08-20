@@ -75,7 +75,7 @@ jobs:
             display_name: Maintenance
           - error_code: 503
             port: 9503
-            display_name: 502 Bad Gateway (HTTP 503)
+            display_name: Bad Gateway
 
     env:
       IMAGE_OWNER: ${{ github.repository_owner }}
@@ -127,7 +127,7 @@ jobs:
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
-            printf -v message 'Maintenance (HTTP 403, port 9403) and 502 Bad Gateway (HTTP 503, port 9503) successfully rolled out image `%s:%s`.' "$DOCKER_IMAGE" "$VERSION"
+            printf -v message 'Maintenance and Bad Gateway successfully rolled out image `%s:%s`.' "$DOCKER_IMAGE" "$VERSION"
           else
             printf -v message 'Rollout failed (build: %s, deploy: %s).\nCheck: <%s>' "$BUILD_RESULT" "$DEPLOY_RESULT" "$RUN_URL"
           fi
