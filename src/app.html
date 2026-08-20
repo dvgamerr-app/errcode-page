@@ -5,6 +5,11 @@
 		<base href="/" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			html[data-status-pending] body {
+				visibility: hidden;
+			}
+		</style>
 		<script>
 			(() => {
 				let theme;
@@ -19,6 +24,7 @@
 				}
 
 				document.documentElement.dataset.theme = theme;
+				document.documentElement.setAttribute('data-status-pending', '');
 			})();
 		</script>
 		%sveltekit.head%
@@ -26,99 +32,82 @@
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
 		<script>
-			const configuredErrorCode = '[[placeholder `http.vars.error_code`]]';
-			if (/^\d{3}$/.test(configuredErrorCode)) {
-				const statusPages = {
-					403: {
-						label: 'Maintenance',
-						variant: 'maintenance',
-						ariaLabel: 'Service under maintenance',
-						documentTitle: 'Maintenance · dvgamerr.app',
-						metaTitle: 'Service under maintenance',
-						description:
-							'This service is temporarily unavailable while an update is being deployed.',
-						heading: 'Maintenance in Progress.'
-					},
-					502: {
-						label: '502',
-						variant: 'error',
-						ariaLabel: 'Error code 502',
-						documentTitle: '502 Bad Gateway · dvgamerr.app',
-						metaTitle: '502 Bad Gateway',
-						description:
-							'The upstream service is temporarily unavailable. Please try again shortly.',
-						heading: 'Bad Gateway'
-					},
-					503: {
-						label: '502',
-						variant: 'error',
-						ariaLabel: 'Error code 502',
-						documentTitle: '502 Bad Gateway · dvgamerr.app',
-						metaTitle: '502 Bad Gateway',
-						description:
-							'The upstream service is temporarily unavailable. Please try again shortly.',
-						heading: 'Bad Gateway'
-					}
-				};
-				const statusPage = statusPages[configuredErrorCode] ?? {
-					label: configuredErrorCode,
-					variant: 'error',
-					ariaLabel: `Error code ${configuredErrorCode}`,
-					documentTitle: `${configuredErrorCode} · dvgamerr.app`,
-					metaTitle: `HTTP ${configuredErrorCode}`,
-					description: 'The requested service is temporarily unavailable.',
-					heading: `HTTP ${configuredErrorCode}`
-				};
+			(() => {
+				const rootElement = document.documentElement;
 
-				const errorCodeElement = document.querySelector('[data-error-code]');
-				if (errorCodeElement) {
-					errorCodeElement.textContent = statusPage.label;
-					errorCodeElement.dataset.code = statusPage.label;
-					errorCodeElement.dataset.variant = statusPage.variant;
-					errorCodeElement.setAttribute('aria-label', statusPage.ariaLabel);
+				try {
+					const configuredErrorCode = '[[placeholder `http.vars.error_code`]]';
+
+					if (/^[1-5]\d{2}$/.test(configuredErrorCode)) {
+						const statusEntry =
+							document.querySelector(`[data-status-entry="${configuredErrorCode}"]`) ??
+							document.querySelector(`[data-status-family="${configuredErrorCode[0]}"]`);
+
+						if (statusEntry instanceof HTMLElement) {
+							const title = statusEntry.dataset.statusTitle;
+							const description = statusEntry.dataset.statusDescription;
+
+							const errorCodeElement = document.querySelector('[data-error-code]');
+							if (errorCodeElement) {
+								errorCodeElement.textContent = configuredErrorCode;
+								errorCodeElement.dataset.code = configuredErrorCode;
+								errorCodeElement.setAttribute('aria-label', `Error code ${configuredErrorCode}`);
+							}
+
+							if (title) {
+								document.title = `${configuredErrorCode} ${title} · dvgamerr.app`;
+								document
+									.querySelector('meta[name="title"]')
+									?.setAttribute('content', `${configuredErrorCode} ${title}`);
+
+								const statusTitleElement = document.querySelector('[data-status-title]');
+								if (statusTitleElement) statusTitleElement.textContent = title;
+							}
+
+							if (description) {
+								document
+									.querySelector('meta[name="description"]')
+									?.setAttribute('content', description);
+
+								const statusDescriptionElement = document.querySelector(
+									'[data-status-description]'
+								);
+								if (statusDescriptionElement) statusDescriptionElement.textContent = description;
+							}
+						}
+					}
+				} finally {
+					rootElement.removeAttribute('data-status-pending');
 				}
 
-				document.title = statusPage.documentTitle;
-				document.querySelector('meta[name="title"]')?.setAttribute('content', statusPage.metaTitle);
-				document
-					.querySelector('meta[name="description"]')
-					?.setAttribute('content', statusPage.description);
+				const yearElement = document.querySelector('[data-current-year]');
+				if (yearElement) yearElement.textContent = String(new Date().getFullYear());
 
-				const statusTitleElement = document.querySelector('[data-status-title]');
-				if (statusTitleElement) statusTitleElement.textContent = statusPage.heading;
+				const themeToggle = document.querySelector('[data-theme-toggle]');
 
-				const statusDescriptionElement = document.querySelector('[data-status-description]');
-				if (statusDescriptionElement) statusDescriptionElement.textContent = statusPage.description;
-			}
+				function updateThemeToggle() {
+					if (!themeToggle) return;
+					const darkModeEnabled = rootElement.dataset.theme === 'dark';
+					const label = darkModeEnabled ? 'Switch to light mode' : 'Switch to dark mode';
+					themeToggle.setAttribute('aria-label', label);
+					themeToggle.setAttribute('title', label);
+					themeToggle.setAttribute('aria-pressed', String(darkModeEnabled));
+				}
 
-			const yearElement = document.querySelector('[data-current-year]');
-			if (yearElement) yearElement.textContent = String(new Date().getFullYear());
-
-			const themeToggle = document.querySelector('[data-theme-toggle]');
-			const rootElement = document.documentElement;
-
-			function updateThemeToggle() {
-				if (!themeToggle) return;
-				const darkModeEnabled = rootElement.dataset.theme === 'dark';
-				const label = darkModeEnabled ? 'Switch to light mode' : 'Switch to dark mode';
-				themeToggle.setAttribute('aria-label', label);
-				themeToggle.setAttribute('title', label);
-				themeToggle.setAttribute('aria-pressed', String(darkModeEnabled));
-			}
-
-			if (themeToggle) {
-				updateThemeToggle();
-				themeToggle.addEventListener('click', () => {
-					const nextTheme = rootElement.dataset.theme === 'dark' ? 'light' : 'dark';
-					rootElement.dataset.theme = nextTheme;
-					try {
-						localStorage.setItem('errcode-page-theme', nextTheme);
-					} catch {
-						// The selected theme still applies for the current page.
-					}
+				if (themeToggle) {
 					updateThemeToggle();
-				});
-			}
+					themeToggle.addEventListener('click', () => {
+						const nextTheme = rootElement.dataset.theme === 'dark' ? 'light' : 'dark';
+						rootElement.dataset.theme = nextTheme;
+						try {
+							localStorage.setItem('errcode-page-theme', nextTheme);
+						} catch {
+							// The selected theme still applies for the current page.
+						}
+						updateThemeToggle();
+					});
+				}
+			})();
 		</script>
 	</body>
 </html>

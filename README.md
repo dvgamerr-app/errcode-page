@@ -1,21 +1,21 @@
 # errcode-page
 
-A static maintenance page for use while an application image is rolling out.
+A compact, configurable HTTP status page for services that cannot return their normal UI.
 
 ## Runtime configuration
 
-Set `ERROR_CODE` on the container to change the HTTP status returned by the maintenance page and
-JSON responses. It defaults to `502`.
+The only runtime input is `ERROR_CODE`. Set it to a three-digit HTTP status code to change the
+response status and the page content. It defaults to `502`.
 
 ```sh
 docker run -e ERROR_CODE=403 <image>
 ```
 
 Requests that accept JSON receive `{"errorCode":403}` with the configured status. Browser requests
-show **Maintenance** for status `403`; statuses `502` and `503` both render the **502 Bad Gateway**
-page. The configured HTTP status is still returned, so the deployed `503` page responds with `503`
-while displaying **502 Bad Gateway**. Static assets and the health endpoint continue to return `200`
-so the page renders correctly and rollout health checks remain available.
+resolve the heading, explanation, next step, accent, and status symbol from that code. Common `4xx`
+and `5xx` statuses have specific copy; valid codes without a dedicated entry use a concise family
+fallback. Static assets and the health endpoint continue to return `200`, so the page renders and
+rollout health checks remain available.
 
 `ERROR_CODE` must be a valid three-digit HTTP status code because Caddy validates it when the
 container starts.

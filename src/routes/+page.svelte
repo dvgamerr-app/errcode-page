@@ -2,4 +2,4 @@
 	import MaintenancePage from '$lib/MaintenancePage.svelte';
 </script>
 
-<MaintenancePage />
+<MaintenancePage code="502" />

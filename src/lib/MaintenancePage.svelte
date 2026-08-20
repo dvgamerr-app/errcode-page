@@ -1,10 +1,22 @@
+<script>
+	import {
+		getHttpStatus,
+		HTTP_STATUS_FAMILIES,
+		HTTP_STATUS_PAGES,
+		normalizeHttpCode
+	} from '$lib/http-status.js';
+
+	/** @type {string | number} */
+	export let code = '502';
+
+	const currentYear = new Date().getFullYear();
+	const status = getHttpStatus(normalizeHttpCode(code));
+</script>
+
 <svelte:head>
-	<title>502 Bad Gateway · dvgamerr.app</title>
-	<meta name="title" content="502 Bad Gateway" />
-	<meta
-		name="description"
-		content="The upstream service is temporarily unavailable. Please try again shortly."
-	/>
+	<title>{status.code} {status.title} · dvgamerr.app</title>
+	<meta name="title" content={`${status.code} ${status.title}`} />
+	<meta name="description" content={status.description} />
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
@@ -32,16 +44,14 @@
 			<span
 				class="glitch"
 				data-error-code
-				data-code="502"
+				data-code={status.code}
 				data-variant="error"
-				aria-label="Error code 502">502</span
+				aria-label={`Error code ${status.code}`}>{status.code}</span
 			>
 		</h1>
 		<div class="message">
-			<h2 id="status-title" data-status-title>Bad Gateway</h2>
-			<p data-status-description>
-				The upstream service is temporarily unavailable. Please try again shortly.
-			</p>
+			<h2 id="status-title" data-status-title>{status.title}</h2>
+			<p data-status-description>{status.description}</p>
 		</div>
 	</section>
 </main>
@@ -49,13 +59,30 @@
 <footer>
 	<div class="licensed">
 		<span>&copy;</span>
-		<span data-current-year>2026</span>
+		<span data-current-year>{currentYear}</span>
 		<strong>dvgamerr.app</strong>
 		<span>design by</span>
 		<a href="https://dvgamerr.app/" target="_blank" rel="noreferrer">Kananek T.</a>
 		<span>v1.0.0</span>
 	</div>
 </footer>
+
+<div hidden aria-hidden="true" data-status-catalog>
+	{#each HTTP_STATUS_PAGES as page (page.code)}
+		<span
+			data-status-entry={page.code}
+			data-status-title={page.title}
+			data-status-description={page.description}
+		></span>
+	{/each}
+	{#each HTTP_STATUS_FAMILIES as family (family.family)}
+		<span
+			data-status-family={family.family}
+			data-status-title={family.title}
+			data-status-description={family.description}
+		></span>
+	{/each}
+</div>
 
 <style>
 	:global(body) {
