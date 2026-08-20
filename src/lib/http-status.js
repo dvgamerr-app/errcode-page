@@ -320,6 +320,7 @@ const STATUS_CONTENT = {
 
 export const HTTP_STATUS_PAGES = Object.entries(STATUS_CONTENT).map(([code, statusContent]) => ({
 	code,
+	family: Number(code[0]),
 	...FAMILY_CONTENT[Number(code[0])],
 	...statusContent
 }));

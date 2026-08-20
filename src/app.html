@@ -46,13 +46,35 @@
 						if (statusEntry instanceof HTMLElement) {
 							const title = statusEntry.dataset.statusTitle;
 							const description = statusEntry.dataset.statusDescription;
+							const category = statusEntry.dataset.statusCategory;
+							const action = statusEntry.dataset.statusAction;
+							const tone = statusEntry.dataset.statusTone;
+							const glyph = statusEntry.dataset.statusGlyph;
+							const family = statusEntry.dataset.statusFamilyValue;
+
+							const statusRoot = document.querySelector('[data-status-root]');
+							if (statusRoot instanceof HTMLElement) {
+								if (tone) statusRoot.dataset.tone = tone;
+								if (family) statusRoot.dataset.family = family;
+							}
 
 							const errorCodeElement = document.querySelector('[data-error-code]');
 							if (errorCodeElement) {
 								errorCodeElement.textContent = configuredErrorCode;
 								errorCodeElement.dataset.code = configuredErrorCode;
-								errorCodeElement.setAttribute('aria-label', `Error code ${configuredErrorCode}`);
 							}
+
+							const codePanelElement = document.querySelector('[data-code-panel]');
+							codePanelElement?.setAttribute('aria-label', `HTTP status ${configuredErrorCode}`);
+
+							const glyphElement = document.querySelector('[data-status-glyph]');
+							if (glyphElement && glyph) glyphElement.textContent = glyph;
+
+							const categoryElement = document.querySelector('[data-status-category]');
+							if (categoryElement && category) categoryElement.textContent = category;
+
+							const actionElement = document.querySelector('[data-status-action]');
+							if (actionElement && action) actionElement.textContent = action;
 
 							if (title) {
 								document.title = `${configuredErrorCode} ${title} · dvgamerr.app`;
@@ -83,30 +105,93 @@
 				const yearElement = document.querySelector('[data-current-year]');
 				if (yearElement) yearElement.textContent = String(new Date().getFullYear());
 
-				const themeToggle = document.querySelector('[data-theme-toggle]');
+				let themeTransitionRunning = false;
+				let previousTouch;
+				let ignoreDoubleClickUntil = 0;
 
-				function updateThemeToggle() {
-					if (!themeToggle) return;
-					const darkModeEnabled = rootElement.dataset.theme === 'dark';
-					const label = darkModeEnabled ? 'Switch to light mode' : 'Switch to dark mode';
-					themeToggle.setAttribute('aria-label', label);
-					themeToggle.setAttribute('title', label);
-					themeToggle.setAttribute('aria-pressed', String(darkModeEnabled));
+				function applyNextTheme() {
+					const nextTheme = rootElement.dataset.theme === 'dark' ? 'light' : 'dark';
+					rootElement.dataset.theme = nextTheme;
+
+					try {
+						localStorage.setItem('errcode-page-theme', nextTheme);
+					} catch {
+						// The selected theme still applies for the current page.
+					}
 				}
 
-				if (themeToggle) {
-					updateThemeToggle();
-					themeToggle.addEventListener('click', () => {
-						const nextTheme = rootElement.dataset.theme === 'dark' ? 'light' : 'dark';
-						rootElement.dataset.theme = nextTheme;
-						try {
-							localStorage.setItem('errcode-page-theme', nextTheme);
-						} catch {
-							// The selected theme still applies for the current page.
+				async function revealNextTheme(x, y) {
+					if (themeTransitionRunning) return;
+
+					const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+					if (!document.startViewTransition || reduceMotion) {
+						applyNextTheme();
+						return;
+					}
+
+					themeTransitionRunning = true;
+					rootElement.classList.add('theme-transitioning');
+
+					try {
+						const transition = document.startViewTransition(applyNextTheme);
+						await transition.ready;
+
+						const radius = Math.hypot(
+							Math.max(x, window.innerWidth - x),
+							Math.max(y, window.innerHeight - y)
+						);
+
+						const reveal = rootElement.animate(
+							{
+								clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`]
+							},
+							{
+								duration: 650,
+								easing: 'cubic-bezier(0.76, 0, 0.24, 1)',
+								pseudoElement: '::view-transition-new(root)'
+							}
+						);
+
+						await reveal.finished;
+						await transition.finished;
+					} finally {
+						rootElement.classList.remove('theme-transitioning');
+						themeTransitionRunning = false;
+					}
+				}
+
+				document.addEventListener('dblclick', (event) => {
+					if (Date.now() < ignoreDoubleClickUntil) return;
+					event.preventDefault();
+					revealNextTheme(event.clientX, event.clientY);
+				});
+
+				document.addEventListener(
+					'pointerup',
+					(event) => {
+						if (event.pointerType !== 'touch') return;
+
+						const currentTouch = {
+							time: Date.now(),
+							x: event.clientX,
+							y: event.clientY
+						};
+
+						if (
+							previousTouch &&
+							currentTouch.time - previousTouch.time <= 350 &&
+							Math.hypot(currentTouch.x - previousTouch.x, currentTouch.y - previousTouch.y) <= 48
+						) {
+							previousTouch = undefined;
+							ignoreDoubleClickUntil = currentTouch.time + 700;
+							revealNextTheme(currentTouch.x, currentTouch.y);
+							return;
 						}
-						updateThemeToggle();
-					});
-				}
+
+						previousTouch = currentTouch;
+					},
+					{ passive: true }
+				);
 			})();
 		</script>
 	</body>
