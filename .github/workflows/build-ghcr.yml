@@ -126,14 +126,18 @@ jobs:
           VERSION: ${{ needs.build.outputs.version }}
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          test -n "$DISCORD_WEBHOOK" || { echo '::warning::DISCORD_WEBHOOK is empty, cannot notify'; exit 0; }
+          # sender `kube <ชื่อแอป>` — ทั้งสอง container (Maintenance / Bad Gateway) ใช้ image เดียวกัน แจ้งรวมข้อความเดียว
           if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
-            printf -v message 'Maintenance and Bad Gateway successfully rolled out image `%s:%s`.' "$DOCKER_IMAGE" "$VERSION"
+            printf -v message '<:ok:1042489844619804682> Rolled out `%s:%s`' "$DOCKER_IMAGE" "$VERSION"
           else
-            printf -v message 'Rollout failed (build: %s, deploy: %s).\nCheck: <%s>' "$BUILD_RESULT" "$DEPLOY_RESULT" "$RUN_URL"
+            stage=deploy
+            if [ "$BUILD_RESULT" != "success" ]; then stage=build; fi
+            printf -v message '<:fai:1065521737896300604><:led:1065521734096257024> %s failed — <%s>' "$stage" "$RUN_URL"
           fi
 
-          payload=$(jq -n --arg content "$message" '{content: $content}')
-          curl --fail-with-body --silent --show-error \
+          payload=$(jq -n --arg content "$message" '{username: "kube error-page", content: $content, allowed_mentions: {parse: []}}')
+          curl --fail-with-body --silent --show-error --max-time 15 \
             -X POST "$DISCORD_WEBHOOK" \
             -H "Content-Type: application/json" \
             -d "$payload"
