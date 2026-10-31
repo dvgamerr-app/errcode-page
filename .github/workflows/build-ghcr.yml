@@ -129,7 +129,7 @@ jobs:
           test -n "$DISCORD_WEBHOOK" || { echo '::warning::DISCORD_WEBHOOK is empty, cannot notify'; exit 0; }
           # sender `kube <ชื่อแอป>` — ทั้งสอง container (Maintenance / Bad Gateway) ใช้ image เดียวกัน แจ้งรวมข้อความเดียว
           if [ "$BUILD_RESULT" = "success" ] && [ "$DEPLOY_RESULT" = "success" ]; then
-            printf -v message '<:ok:1042489844619804682> Rolled out `%s:%s`' "$DOCKER_IMAGE" "$VERSION"
+            printf -v message '<:ok:1042489844619804682> Rolled out \140%s:%s\140' "$DOCKER_IMAGE" "$VERSION"
           else
             stage=deploy
             if [ "$BUILD_RESULT" != "success" ]; then stage=build; fi
